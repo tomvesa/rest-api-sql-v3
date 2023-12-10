@@ -10,8 +10,15 @@ const asyncHandler = require('./middleware/asyncHandler');
 // variable to enable global error logging
 const enableGlobalErrorLogging = process.env.ENABLE_GLOBAL_ERROR_LOGGING === 'true';
 
+
+// router imports
+const user = require('./routes/api/user');
+const course = require('./routes/api/course');
+
 // create the Express app
 const app = express();
+//add a body property to the express request
+app.use(express.json());
 
 // setup morgan which gives us http request logging
 app.use(morgan('dev'));
@@ -21,12 +28,15 @@ const sequelize = new Sequelize(development);
 // test if connection is established
 app.use( asyncHandler( async ( req, res, next) => {
   await sequelize.authenticate();
+  await sequelize.sync({force: true});
   console.log('Connected to database');
   next();
     })
 )
   
 
+app.use('/api/users', user);
+app.use('/api/courses', course);
 
 // setup a friendly greeting for the root route
 app.get('/', (req, res) => {
@@ -34,8 +44,6 @@ app.get('/', (req, res) => {
     message: 'Welcome to the REST API project!',
   });
 });
-
-
 
 // send 404 if no other route matched
 app.use((req, res) => {
